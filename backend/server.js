@@ -12,13 +12,18 @@ const PORT = process.env.PORT || 4000;
 // ✅ Correct CORS configuration for Render + Netlify
 app.use(cors({
   origin: [
-    "http://localhost:5173",               // Vite local
-    "https://shelfit-v2.netlify.app"       // LIVE FRONTEND (correct)
+    "http://localhost:5173",          // Vite local
+    "https://shelfit-v2.netlify.app"  // LIVE FRONTEND
   ],
-  methods: ["GET", "POST", "PUT", "DELETE"],
+  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   allowedHeaders: ["Content-Type", "Authorization"],
-  credentials: true
+  credentials: true,
+  preflightContinue: false,
+  optionsSuccessStatus: 204
 }));
+
+// ✅ Ensure OPTIONS preflight requests are handled
+app.options("*", cors());
 
 app.use(express.json());
 
