@@ -1,4 +1,3 @@
-// backend/server.js
 require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
@@ -10,30 +9,31 @@ const booksRouter = require("./routes/books");
 const app = express();
 const PORT = process.env.PORT || 4000;
 
-// 🔐 CORS: allow localhost & Netlify
-const corsOptions = {
+// ✅ Correct CORS configuration for Render + Netlify
+app.use(cors({
   origin: [
-    "http://localhost:5173", // Vite dev
-    "https://velvety-alfajores-8621a7.netlify.app", // your Netlify URL
+    "http://localhost:5173",               // Vite local
+    "https://shelfit-v2.netlify.app"       // LIVE FRONTEND (correct)
   ],
-};
-app.use(cors(corsOptions));
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  allowedHeaders: ["Content-Type", "Authorization"],
+  credentials: true
+}));
 
 app.use(express.json());
 
-// init DB
+// Init SQLite DB
 init();
 
 app.get("/", (req, res) => {
   res.json({ ok: true, message: "ShelfIt V2 backend running" });
 });
 
-// auth routes (email/password + verify)
+// Routes
 app.use("/api/auth", authRouter);
-
-// books routes (no supabase auth backend now, just demo-user logic)
 app.use("/api/books", booksRouter);
 
+// Start server
 app.listen(PORT, () => {
   console.log(`ShelfIt V2 API listening on port ${PORT}`);
 });
