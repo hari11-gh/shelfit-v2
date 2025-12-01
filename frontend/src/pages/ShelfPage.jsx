@@ -32,25 +32,42 @@ export default function ShelfPage() {
     if (token) loadSaved();
   }, [token]);
 
-  // load saved books
+  /** --------------------------------------------------
+   * LOAD SAVED BOOKS
+   * Backend route: GET /api/books
+   * -------------------------------------------------- */
   async function loadSaved() {
     try {
-      const res = await fetch(`${API}/api/books/${user.id}`, {
+      const res = await fetch(`${API}/api/books`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      setSaved(data);
+
+      const text = await res.text();
+      let data;
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        console.error("Books returned non-JSON:", text);
+        data = [];
+      }
+
+      if (Array.isArray(data)) setSaved(data);
+      else setSaved([]);
     } finally {
       setPageLoading(false);
     }
   }
 
-  // Google Books search
+  /** --------------------------------------------------
+   * GOOGLE SEARCH
+   * -------------------------------------------------- */
   async function onSearch(q) {
     if (!q.trim()) return;
     if (!GOOGLE_KEY) return alert("Missing Google Books key");
 
     setSearchLoading(true);
+
     try {
       const url = `https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(
         q
@@ -58,16 +75,18 @@ export default function ShelfPage() {
 
       const res = await fetch(url);
       const data = await res.json();
-
       setResults(data.items || []);
     } finally {
       setSearchLoading(false);
     }
   }
 
-  // add from Google search
+  /** --------------------------------------------------
+   * SAVE BOOK FROM GOOGLE
+   * Backend route: POST /api/books
+   * -------------------------------------------------- */
   async function addFromSearch(volume) {
-    const res = await fetch(`${API}/api/books/${user.id}`, {
+    const res = await fetch(`${API}/api/books`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -80,9 +99,12 @@ export default function ShelfPage() {
     if (data.ok) setSaved((prev) => [data.book, ...prev]);
   }
 
-  // manual add
+  /** --------------------------------------------------
+   * MANUAL ADD
+   * Backend route: POST /api/books/manual
+   * -------------------------------------------------- */
   async function addManual(bookObj) {
-    const res = await fetch(`${API}/api/books/${user.id}/manual`, {
+    const res = await fetch(`${API}/api/books/manual`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -98,9 +120,12 @@ export default function ShelfPage() {
     }
   }
 
-  // update status FIXED
+  /** --------------------------------------------------
+   * UPDATE STATUS
+   * Backend route: PATCH /api/books/:id
+   * -------------------------------------------------- */
   async function updateBook(id, patch) {
-    const res = await fetch(`${API}/api/books/${id}/${user.id}`, {
+    const res = await fetch(`${API}/api/books/${id}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -117,9 +142,12 @@ export default function ShelfPage() {
     }
   }
 
-  // delete book FIXED
+  /** --------------------------------------------------
+   * DELETE BOOK
+   * Backend route: DELETE /api/books/:id
+   * -------------------------------------------------- */
   async function deleteBook(id) {
-    const res = await fetch(`${API}/api/books/${id}/${user.id}`, {
+    const res = await fetch(`${API}/api/books/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -127,39 +155,39 @@ export default function ShelfPage() {
     if (res.ok) setSaved((prev) => prev.filter((b) => b.id !== id));
   }
 
-  // open notes FIXED
+  /** --------------------------------------------------
+   * OPEN NOTES
+   * Backend route: GET /api/books/:id/comments
+   * -------------------------------------------------- */
   async function openNotes(book) {
     setActiveBook(book);
     setNotes([]);
     setNotesLoading(true);
 
-    const res = await fetch(
-      `${API}/api/books/${book.id}/${user.id}/comments`,
-      {
-        headers: { Authorization: `Bearer ${token}` },
-      }
-    );
+    const res = await fetch(`${API}/api/books/${book.id}/comments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
 
     const data = await res.json();
-    setNotes(data || []);
+    setNotes(Array.isArray(data) ? data : []);
     setNotesLoading(false);
   }
 
-  // add note FIXED
+  /** --------------------------------------------------
+   * ADD NOTE
+   * Backend route: POST /api/books/:id/comments
+   * -------------------------------------------------- */
   async function onAddNote(bookId) {
     if (!newNote.trim()) return;
 
-    const res = await fetch(
-      `${API}/api/books/${bookId}/${user.id}/comments`,
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: newNote }),
-      }
-    );
+    const res = await fetch(`${API}/api/books/${bookId}/comments`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text: newNote }),
+    });
 
     const data = await res.json();
     if (data.ok) {
@@ -168,30 +196,35 @@ export default function ShelfPage() {
     }
   }
 
-  // delete note FIXED
+  /** --------------------------------------------------
+   * DELETE NOTE
+   * Backend route: DELETE /api/books/:id/comments/:commentId
+   * -------------------------------------------------- */
   async function onDeleteNote(bookId, commentId) {
     const res = await fetch(
-      `${API}/api/books/${bookId}/${user.id}/comments/${commentId}`,
+      `${API}/api/books/${bookId}/comments/${commentId}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
       }
     );
 
-    if (res.ok) {
-      setNotes((prev) => prev.filter((n) => n.id !== commentId));
-    }
+    if (res.ok) setNotes((prev) => prev.filter((n) => n.id !== commentId));
   }
 
-  // shelf filtering
-  const filteredShelf = saved.filter((b) => {
-    const q = shelfSearch.toLowerCase();
-    const goodStatus = shelfFilter === "all" || b.status === shelfFilter;
-    const goodSearch =
-      b.title.toLowerCase().includes(q) ||
-      (b.authors || "").toLowerCase().includes(q);
-    return goodStatus && goodSearch;
-  });
+  /** --------------------------------------------------
+   * FILTER SHELF — now safe
+   * -------------------------------------------------- */
+  const filteredShelf = Array.isArray(saved)
+    ? saved.filter((b) => {
+        const q = shelfSearch.toLowerCase();
+        const goodStatus = shelfFilter === "all" || b.status === shelfFilter;
+        const goodSearch =
+          b.title.toLowerCase().includes(q) ||
+          (b.authors || "").toLowerCase().includes(q);
+        return goodStatus && goodSearch;
+      })
+    : [];
 
   return (
     <div className="min-h-screen animate-fadeIn">
@@ -238,7 +271,7 @@ export default function ShelfPage() {
               />
 
               <select
-                className="px-3 py-2 rounded-lg
+                className="px-3 py-2 rounded-lg 
                            bg-[rgba(45,25,75,0.7)]
                            border border-[rgba(180,140,255,0.35)]
                            text-purple-200
