@@ -35,7 +35,7 @@ export default function ShelfPage() {
   // load saved books
   async function loadSaved() {
     try {
-      const res = await fetch(`${API}/api/books`, {
+      const res = await fetch(`${API}/api/books/${user.id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -67,7 +67,7 @@ export default function ShelfPage() {
 
   // add from Google search
   async function addFromSearch(volume) {
-    const res = await fetch(`${API}/api/books`, {
+    const res = await fetch(`${API}/api/books/${user.id}`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -82,7 +82,7 @@ export default function ShelfPage() {
 
   // manual add
   async function addManual(bookObj) {
-    const res = await fetch(`${API}/api/books/manual`, {
+    const res = await fetch(`${API}/api/books/${user.id}/manual`, {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -98,9 +98,9 @@ export default function ShelfPage() {
     }
   }
 
-  // update status
+  // update status FIXED
   async function updateBook(id, patch) {
-    const res = await fetch(`${API}/api/books/${id}`, {
+    const res = await fetch(`${API}/api/books/${id}/${user.id}`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -117,9 +117,9 @@ export default function ShelfPage() {
     }
   }
 
-  // delete book
+  // delete book FIXED
   async function deleteBook(id) {
-    const res = await fetch(`${API}/api/books/${id}`, {
+    const res = await fetch(`${API}/api/books/${id}/${user.id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -127,33 +127,39 @@ export default function ShelfPage() {
     if (res.ok) setSaved((prev) => prev.filter((b) => b.id !== id));
   }
 
-  // open notes drawer
+  // open notes FIXED
   async function openNotes(book) {
     setActiveBook(book);
     setNotes([]);
     setNotesLoading(true);
 
-    const res = await fetch(`${API}/api/books/${book.id}/comments`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const res = await fetch(
+      `${API}/api/books/${book.id}/${user.id}/comments`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+      }
+    );
 
     const data = await res.json();
     setNotes(data || []);
     setNotesLoading(false);
   }
 
-  // add note
+  // add note FIXED
   async function onAddNote(bookId) {
     if (!newNote.trim()) return;
 
-    const res = await fetch(`${API}/api/books/${bookId}/comments`, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${token}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ text: newNote }),
-    });
+    const res = await fetch(
+      `${API}/api/books/${bookId}/${user.id}/comments`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: newNote }),
+      }
+    );
 
     const data = await res.json();
     if (data.ok) {
@@ -162,10 +168,10 @@ export default function ShelfPage() {
     }
   }
 
-  // delete note
+  // delete note FIXED
   async function onDeleteNote(bookId, commentId) {
     const res = await fetch(
-      `${API}/api/books/${bookId}/comments/${commentId}`,
+      `${API}/api/books/${bookId}/${user.id}/comments/${commentId}`,
       {
         method: "DELETE",
         headers: { Authorization: `Bearer ${token}` },
@@ -231,7 +237,6 @@ export default function ShelfPage() {
                 onChange={(e) => setShelfSearch(e.target.value)}
               />
 
-              {/* Shelf filter select (good contrast) */}
               <select
                 className="px-3 py-2 rounded-lg
                            bg-[rgba(45,25,75,0.7)]
