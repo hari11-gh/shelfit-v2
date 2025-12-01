@@ -6,7 +6,7 @@ import React, {
 } from "react";
 import { supabase } from "../lib/supabaseClient";
 
-const API = import.meta.env.VITE_API_BASE || "http://localhost:4000";
+const API = import.meta.env.VITE_API_BASE || "https://shelfit-backend.onrender.com";
 
 const AuthContext = createContext(null);
 
