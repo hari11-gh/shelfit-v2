@@ -1,8 +1,6 @@
 import React, { useEffect, useState } from "react";
 import CommentsList from "./CommentsList";
 
-const API = import.meta.env.VITE_API_BASE || "http://localhost:4000";
-
 export default function BookCard({
   book,
   mode = "search",
@@ -15,7 +13,11 @@ export default function BookCard({
   const authors =
     book.authors || (vi.authors && vi.authors.join?.(", ")) || "";
   const thumb =
-    book.thumbnail || vi.imageLinks?.thumbnail || vi.imageLinks?.smallThumbnail || "";
+    book.thumbnail ||
+    vi.imageLinks?.thumbnail ||
+    vi.imageLinks?.smallThumbnail ||
+    "";
+  const previewLink = vi.previewLink || vi.infoLink || book.infoLink || "";
 
   const [status, setStatus] = useState(book.status || "To Read");
   const [showNotes, setShowNotes] = useState(false);
@@ -43,93 +45,110 @@ export default function BookCard({
     }
   }
 
-  const previewLink = vi.previewLink || vi.infoLink || book.infoLink || "";
-
-  const statusClass =
+  const pillClass =
     status === "Finished"
-      ? "pill done"
+      ? "bg-emerald-500/15 text-emerald-200 border border-emerald-400/40"
       : status === "Reading"
-      ? "pill reading"
-      : "pill todo";
+      ? "bg-amber-500/15 text-amber-200 border border-amber-400/40"
+      : "bg-sky-500/10 text-sky-200 border border-sky-400/40";
 
   return (
-    <article className="book-card">
-      <div className="book-thumb">
+    <article className="flex gap-3 p-3 rounded-2xl bg-gradient-to-br from-slate-900/70 via-slate-950/80 to-slate-900/60 border border-white/8 shadow-space-soft">
+      <div className="flex-shrink-0">
         {thumb ? (
-          <img src={thumb.replace(/^http:/, "https:")} alt={title} />
+          <img
+            src={thumb.replace(/^http:/, "https:")}
+            alt={title}
+            className="w-[70px] h-[100px] object-cover rounded-xl border border-white/10"
+          />
         ) : (
-          <div className="thumb-placeholder">No cover</div>
+          <div className="w-[70px] h-[100px] rounded-xl border border-dashed border-slate-500/60 flex items-center justify-center text-[10px] text-slate-400">
+            No cover
+          </div>
         )}
       </div>
 
-      <div className="book-main">
-        <div className="book-header">
-          <div>
-            <h3 className="book-title">{title}</h3>
-            {authors && <p className="book-authors">{authors}</p>}
+      <div className="flex-1 flex flex-col gap-1 min-w-0">
+        <div className="flex justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold truncate">{title}</h3>
+            {authors && (
+              <p className="text-xs text-slate-300 truncate">{authors}</p>
+            )}
           </div>
-
           {mode === "saved" && (
-            <div className="status-wrap">
-              <span className={statusClass}>{status}</span>
-            </div>
+            <span
+              className={`text-[10px] px-2 py-0.5 rounded-full uppercase tracking-wide ${pillClass}`}
+            >
+              {status}
+            </span>
           )}
         </div>
 
-        {mode === "saved" && (
-          <div className="book-meta-row">
-            <label className="field-label">Status</label>
-            <select value={status} onChange={handleStatusChange}>
-              <option>To Read</option>
-              <option>Reading</option>
-              <option>Finished</option>
-            </select>
-
-            {previewLink && (
-              <a
-                href={previewLink}
-                target="_blank"
-                rel="noreferrer"
-                className="btn ghost"
+        {mode === "saved" ? (
+          <>
+            <div className="flex flex-wrap items-center gap-2 mt-1 text-[11px]">
+              <span className="text-slate-400">Status</span>
+              <select
+                value={status}
+                onChange={handleStatusChange}
+                className="bg-slate-950/70 border border-slate-600/60 rounded-full px-2 py-1 text-[11px] focus:outline-none focus:ring-1 focus:ring-space-accent-soft"
               >
-                Open preview
-              </a>
-            )}
+                <option>To Read</option>
+                <option>Reading</option>
+                <option>Finished</option>
+              </select>
 
-            <button className="btn ghost danger" onClick={handleDelete}>
-              Delete
-            </button>
-          </div>
-        )}
+              {previewLink && (
+                <a
+                  href={previewLink}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="ml-auto inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-slate-900/80 border border-slate-500/60 hover:bg-slate-800"
+                >
+                  🔗 Preview
+                </a>
+              )}
 
-        {mode === "search" && (
-          <div className="book-meta-row">
-            <button className="btn primary" onClick={handleAdd}>
-              Add to shelf
-            </button>
-            {previewLink && (
-              <a
-                href={previewLink}
-                target="_blank"
-                rel="noreferrer"
-                className="btn ghost"
+              <button
+                type="button"
+                onClick={handleDelete}
+                className="inline-flex items-center gap-1 text-[11px] px-2 py-1 rounded-full bg-rose-900/60 border border-rose-500/60 text-rose-100 hover:bg-rose-800"
               >
-                Preview
-              </a>
-            )}
-          </div>
-        )}
+                ✕ Delete
+              </button>
+            </div>
 
-        {mode === "saved" && (
-          <div className="notes-toggle">
-            <button className="link-button" onClick={() => setShowNotes((v) => !v)}>
+            <button
+              type="button"
+              className="mt-2 text-[11px] text-indigo-300 hover:text-indigo-200 underline underline-offset-2 w-fit"
+              onClick={() => setShowNotes((v) => !v)}
+            >
               {showNotes ? "Hide notes" : "Show notes & comments"}
             </button>
-          </div>
-        )}
 
-        {mode === "saved" && showNotes && book.id && (
-          <CommentsList bookId={book.id} apiBase={API} />
+            {showNotes && book.id && <CommentsList bookId={book.id} />}
+          </>
+        ) : (
+          <div className="flex items-center gap-2 mt-2">
+            <button
+              type="button"
+              onClick={handleAdd}
+              className="inline-flex items-center gap-1 text-xs px-3 py-1.5 rounded-full bg-space-accent text-white shadow-md shadow-violet-900/50 hover:bg-violet-500"
+            >
+              ➕ Add to shelf
+            </button>
+            {previewLink && (
+              <a
+                href={previewLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-[11px] px-3 py-1.5 rounded-full bg-slate-900/80 border border-slate-500/60 hover:bg-slate-800"
+              >
+                🔗 Preview
+              </a>
+            )}
+          </div>
         )}
       </div>
     </article>

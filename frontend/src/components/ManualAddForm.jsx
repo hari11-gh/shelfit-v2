@@ -3,85 +3,68 @@ import React, { useState } from "react";
 export default function ManualAddForm({ onAdd }) {
   const [title, setTitle] = useState("");
   const [authors, setAuthors] = useState("");
-  const [status, setStatus] = useState("To Read");
-  const [notes, setNotes] = useState("");
-  const [thumbnailUrl, setThumbnailUrl] = useState("");
+  const [description, setDescription] = useState("");
+  const [thumbnail, setThumbnail] = useState("");
 
   function submit(e) {
-    e?.preventDefault?.();
-    if (!title.trim()) {
-      alert("Title is required");
-      return;
-    }
+    e.preventDefault();
 
-    const book = {
-      id: "manual-" + Date.now().toString(36),
-      title: title.trim(),
-      authors: authors.trim(),
-      publisher: "",
-      publishedDate: "",
-      description: notes,
-      thumbnail: thumbnailUrl.trim(),
-      status,
-      raw: JSON.stringify({ manual: true }),
-    };
+    if (!title.trim()) return;
 
-    onAdd(book);
+    onAdd({
+      title,
+      authors,
+      description,
+      thumbnail,
+      status: "To Read",
+    });
+
     setTitle("");
     setAuthors("");
-    setStatus("To Read");
-    setNotes("");
-    setThumbnailUrl("");
+    setDescription("");
+    setThumbnail("");
   }
 
   return (
-    <form className="manual-form" onSubmit={submit}>
-      <label>
-        <span>Title</span>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          placeholder="Book title"
-        />
-      </label>
+    <form
+      onSubmit={submit}
+      className="cosmic-panel p-4 rounded-xl mt-3 space-y-3"
+    >
+      <h3 className="font-medium text-sm text-purple-200">Add Manual Book</h3>
 
-      <label>
-        <span>Author</span>
-        <input
-          value={authors}
-          onChange={(e) => setAuthors(e.target.value)}
-          placeholder="Author name"
-        />
-      </label>
+      <input
+        value={title}
+        onChange={(e) => setTitle(e.target.value)}
+        className="w-full bg-slate-900/40 border border-purple-400/20 rounded px-2 py-2 text-sm
+                   focus:border-purple-400/40 outline-none"
+        placeholder="Title"
+      />
 
-      <label>
-        <span>Status</span>
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          <option>To Read</option>
-          <option>Reading</option>
-          <option>Finished</option>
-        </select>
-      </label>
+      <input
+        value={authors}
+        onChange={(e) => setAuthors(e.target.value)}
+        className="w-full bg-slate-900/40 border border-purple-400/20 rounded px-2 py-2 text-sm
+                   focus:border-purple-400/40 outline-none"
+        placeholder="Authors (optional)"
+      />
 
-      <label>
-        <span>Cover image URL (optional)</span>
-        <input
-          value={thumbnailUrl}
-          onChange={(e) => setThumbnailUrl(e.target.value)}
-          placeholder="https://example.com/cover.jpg"
-        />
-      </label>
+      <textarea
+        value={description}
+        onChange={(e) => setDescription(e.target.value)}
+        className="w-full bg-slate-900/40 border border-purple-400/20 rounded px-2 py-2 text-sm
+                   focus:border-purple-400/40 outline-none"
+        placeholder="Description (optional)"
+      />
 
-      <label>
-        <span>Notes</span>
-        <textarea
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Thoughts, quotes, progress..."
-        />
-      </label>
+      <input
+        value={thumbnail}
+        onChange={(e) => setThumbnail(e.target.value)}
+        className="w-full bg-slate-900/40 border border-purple-400/20 rounded px-2 py-2 text-sm
+                   focus:border-purple-400/40 outline-none"
+        placeholder="Image URL (optional)"
+      />
 
-      <button className="btn primary full" type="submit">
+      <button className="btn-cosmic w-full py-2 rounded-xl text-sm">
         Add Book
       </button>
     </form>

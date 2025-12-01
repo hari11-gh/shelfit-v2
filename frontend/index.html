@@ -1,12 +1,55 @@
 <!doctype html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>ShelfIt V2</title>
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0b001f" />
   </head>
+
   <body>
+
+    <!-- Random starfield canvas (THE FIX) -->
+    <canvas id="starfield"></canvas>
+
+    <!-- Meteor streaks -->
+    <div class="meteor"></div>
+    <div class="meteor"></div>
+    <div class="meteor"></div>
+    <div class="meteor"></div>
+
+    <!-- React root -->
     <div id="root"></div>
+
     <script type="module" src="/src/main.jsx"></script>
+
+    <!-- Generate stars -->
+    <script>
+      const canvas = document.getElementById("starfield");
+      const ctx = canvas.getContext("2d");
+
+      function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        drawStars();
+      }
+
+      function drawStars() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        for (let i = 0; i < 500; i++) {
+          const x = Math.random() * canvas.width;
+          const y = Math.random() * canvas.height;
+          const size = Math.random() * 1.5;
+          const brightness = 150 + Math.random() * 100;
+          ctx.fillStyle = `rgb(${brightness}, ${brightness}, ${brightness})`;
+          ctx.fillRect(x, y, size, size);
+        }
+      }
+
+      window.addEventListener("resize", resize);
+      resize();
+    </script>
+
   </body>
 </html>

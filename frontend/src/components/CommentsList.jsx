@@ -1,74 +1,63 @@
 import React, { useEffect, useState } from "react";
+import { useAuth } from "../state/AuthContext";
 
-export default function CommentsList({ bookId, apiBase }) {
+export default function CommentsList({ bookId }) {
+  const { API, token } = useAuth();
   const [comments, setComments] = useState([]);
   const [text, setText] = useState("");
-  const API = apiBase || import.meta.env.VITE_API_BASE || "http://localhost:4000";
-
-  useEffect(() => {
-    load();
-  }, [bookId]);
 
   async function load() {
-    try {
-      const res = await fetch(`${API}/api/books/${bookId}/comments`);
-      if (!res.ok) {
-        setComments([]);
-        return;
-      }
+    const res = await fetch(`${API}/api/books/${bookId}/comments`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok) {
       const data = await res.json();
-      setComments(data || []);
-    } catch (err) {
-      console.error("Comments load error", err);
+      setComments(data);
     }
   }
 
+  useEffect(() => {
+    if (bookId && token) load();
+  }, [bookId, token]);
+
   async function add() {
     if (!text.trim()) return;
-    try {
-      const res = await fetch(`${API}/api/books/${bookId}/comments`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: text.trim() }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => null);
-        console.warn("Add comment failed", data);
-        return;
-      }
+
+    const res = await fetch(`${API}/api/books/${bookId}/comments`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${token}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ text }),
+    });
+
+    if (res.ok) {
       setText("");
       load();
-    } catch (err) {
-      console.error("Add comment error", err);
     }
   }
 
   return (
-    <div className="comments-box">
-      <div className="comments-list">
-        {comments.length === 0 ? (
-          <div className="comments-empty">No notes yet</div>
-        ) : (
-          comments.map((c) => (
-            <div className="comment-row" key={c.id}>
-              <div className="comment-text">{c.text}</div>
-              <div className="comment-time">
-                {c.created_at
-                  ? new Date(c.created_at).toLocaleString()
-                  : ""}
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-      <div className="comments-input-row">
+    <div className="mt-3">
+      {comments.map((c) => (
+        <div key={c.id} className="bg-slate-700 p-2 rounded mb-2 text-sm">
+          {c.text}
+        </div>
+      ))}
+
+      <div className="flex gap-2">
         <input
-          className="input subtle"
-          placeholder="Add a quick note..."
+          className="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1 text-sm"
+          placeholder="Add note..."
           value={text}
           onChange={(e) => setText(e.target.value)}
         />
-        <button className="btn primary" type="button" onClick={add}>
+        <button
+          onClick={add}
+          className="px-3 py-1 bg-indigo-500 text-sm rounded"
+        >
           Add
         </button>
       </div>
